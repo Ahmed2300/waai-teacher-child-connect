@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
+import { database } from "@/lib/firebase";
+import { ref, set, push, onValue, get, update, remove } from "firebase/database";
 
 // Define types
 export type Avatar = {
@@ -50,44 +52,82 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [activeChild, setActiveChildState] = useState<Child | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load children from localStorage when the teacher changes
+  // Load children from Firebase when the teacher changes
   useEffect(() => {
     if (currentTeacher) {
-      const storedChildren = localStorage.getItem(`waai-children-${currentTeacher.id}`);
-      if (storedChildren) {
-        setChildrenList(JSON.parse(storedChildren));
-      } else {
-        setChildrenList([]);
+      setIsLoading(true);
+      
+      // Reference to the children in the database
+      const childrenRef = ref(database, `teachers/${currentTeacher.id}/children`);
+      
+      // Listen for changes to the children
+      const unsubscribe = onValue(childrenRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const childrenData = snapshot.val();
+          const childrenArray: Child[] = [];
+          
+          // Convert object to array
+          Object.keys(childrenData).forEach((key) => {
+            childrenArray.push({
+              id: key,
+              ...childrenData[key]
+            });
+          });
+          
+          setChildrenList(childrenArray);
+        } else {
+          setChildrenList([]);
+        }
+        
+        setIsLoading(false);
+      });
+      
+      // Get active child from localStorage if available
+      const storedActiveChildId = localStorage.getItem(`waai-active-child-${currentTeacher.id}`);
+      if (storedActiveChildId) {
+        const childRef = ref(database, `teachers/${currentTeacher.id}/children/${storedActiveChildId}`);
+        get(childRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const childData = snapshot.val();
+            setActiveChildState({
+              id: storedActiveChildId,
+              ...childData
+            });
+          }
+        });
       }
+      
+      return () => {
+        unsubscribe();
+      };
     } else {
       setChildrenList([]);
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [currentTeacher]);
-
-  // Save children to localStorage whenever they change
-  useEffect(() => {
-    if (currentTeacher && childrenList.length > 0) {
-      localStorage.setItem(`waai-children-${currentTeacher.id}`, JSON.stringify(childrenList));
-    }
-  }, [childrenList, currentTeacher]);
 
   const addChild = async (name: string, avatarId: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
       
       if (!currentTeacher) return false;
       
-      const newChild: Child = {
-        id: Math.random().toString(36).substr(2, 9),
+      // Reference to the children collection
+      const childrenRef = ref(database, `teachers/${currentTeacher.id}/children`);
+      
+      // Create a new child reference with an auto-generated key
+      const newChildRef = push(childrenRef);
+      
+      // The child object to save
+      const newChild: Omit<Child, "id"> = {
         name,
         avatarId,
         createdAt: Date.now()
       };
       
-      setChildrenList(prev => [...prev, newChild]);
+      // Save the child to the database
+      await set(newChildRef, newChild);
+      
       return true;
     } catch (error) {
       console.error("Add child error:", error);

@@ -1,5 +1,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { auth, database } from "@/lib/firebase";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser
+} from "firebase/auth";
+import { 
+  ref, 
+  set, 
+  get, 
+  child, 
+  onValue
+} from "firebase/database";
 
 // Define types
 type Teacher = {
@@ -25,33 +40,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Check if we have a teacher in localStorage on mount
+  // Listen for auth state changes
   useEffect(() => {
-    const storedTeacher = localStorage.getItem('waai-teacher');
-    if (storedTeacher) {
-      setCurrentTeacher(JSON.parse(storedTeacher));
-    }
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Get teacher data from Realtime Database
+          const teacherRef = ref(database, `teachers/${user.uid}/profile`);
+          onValue(teacherRef, (snapshot) => {
+            if (snapshot.exists()) {
+              const teacherData = snapshot.val();
+              
+              // Get PIN information
+              const pinRef = ref(database, `teachers/${user.uid}/security/hasPin`);
+              get(pinRef).then((pinSnapshot) => {
+                const hasPin = pinSnapshot.exists() ? pinSnapshot.val() : false;
+                
+                setCurrentTeacher({
+                  id: user.uid,
+                  name: teacherData.name,
+                  email: teacherData.email,
+                  hasPin: hasPin
+                });
+                
+                setIsLoading(false);
+              });
+            } else {
+              setCurrentTeacher(null);
+              setIsLoading(false);
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching teacher data:", error);
+          setCurrentTeacher(null);
+          setIsLoading(false);
+        }
+      } else {
+        setCurrentTeacher(null);
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    // This would normally be a Firebase auth call
-    // For now, we'll simulate a successful registration
     try {
       setIsLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Create a mock teacher object with a unique ID
+      // Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Create teacher profile in Realtime Database
+      await set(ref(database, `teachers/${user.uid}/profile`), {
+        name,
+        email,
+        createdAt: Date.now()
+      });
+      
+      // Set hasPin to false initially
+      await set(ref(database, `teachers/${user.uid}/security/hasPin`), false);
+      
       const teacher: Teacher = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: user.uid,
         name,
         email,
         hasPin: false
       };
       
       setCurrentTeacher(teacher);
-      localStorage.setItem('waai-teacher', JSON.stringify(teacher));
       return true;
     } catch (error) {
       console.error("Register error:", error);
@@ -62,23 +120,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   const login = async (email: string, password: string): Promise<boolean> => {
-    // This would normally be a Firebase auth call
     try {
       setIsLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For demo, we'll create a teacher object
-      // In a real app, we'd retrieve this from Firebase
-      const teacher: Teacher = {
-        id: "teacher-123",
-        name: "Demo Teacher",
-        email,
-        hasPin: true
-      };
-      
-      setCurrentTeacher(teacher);
-      localStorage.setItem('waai-teacher', JSON.stringify(teacher));
+      // Sign in user with Firebase Authentication
+      await signInWithEmailAndPassword(auth, email, password);
       return true;
     } catch (error) {
       console.error("Login error:", error);
@@ -91,15 +137,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setupPin = async (pin: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      // Simulate API call to save the hashed PIN
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (currentTeacher) {
+        // In a real application, you'd want to hash the PIN before storing
+        // For simplicity, we'll store the PIN as is for now
+        // This is NOT secure and should be replaced with proper hashing
+        const hashedPin = `hashed_${pin}_placeholder`;
+        
+        // Store the hashed PIN in the database
+        await set(ref(database, `teachers/${currentTeacher.id}/security/hashedPin`), hashedPin);
+        
+        // Update hasPin flag
+        await set(ref(database, `teachers/${currentTeacher.id}/security/hasPin`), true);
+        
+        // Update current teacher state
         const updatedTeacher = { ...currentTeacher, hasPin: true };
         setCurrentTeacher(updatedTeacher);
-        localStorage.setItem('waai-teacher', JSON.stringify(updatedTeacher));
-        // In real implementation, we'd save the hashed PIN to Firebase
-        localStorage.setItem(`waai-teacher-pin-${currentTeacher.id}`, `hashed_${pin}_placeholder`);
+        
         return true;
       }
       return false;
@@ -114,14 +168,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyPin = async (pin: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      // Simulate API call to verify the PIN
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (currentTeacher) {
-        const storedHashedPin = localStorage.getItem(`waai-teacher-pin-${currentTeacher.id}`);
-        // In real implementation, we'd use bcrypt to compare
-        const isValid = storedHashedPin === `hashed_${pin}_placeholder`;
-        return isValid;
+        // Get the stored hashed PIN from the database
+        const pinRef = ref(database, `teachers/${currentTeacher.id}/security/hashedPin`);
+        const snapshot = await get(pinRef);
+        
+        if (snapshot.exists()) {
+          const storedHashedPin = snapshot.val();
+          
+          // In a real application, you'd use a proper comparison method
+          // For simplicity, we're doing a direct comparison with our placeholder
+          const isValid = storedHashedPin === `hashed_${pin}_placeholder`;
+          
+          return isValid;
+        }
       }
       return false;
     } catch (error) {
@@ -132,9 +193,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  const logout = () => {
-    setCurrentTeacher(null);
-    localStorage.removeItem('waai-teacher');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentTeacher(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
