@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { database } from "@/lib/firebase";
@@ -16,6 +15,7 @@ export type Child = {
   name: string;
   avatarId: string;
   createdAt: number;
+  pin?: string; // Optional PIN for the child
 };
 
 interface ChildrenContextType {
@@ -23,9 +23,10 @@ interface ChildrenContextType {
   availableAvatars: Avatar[];
   activeChild: Child | null;
   isLoading: boolean;
-  addChild: (name: string, avatarId: string) => Promise<boolean>;
+  addChild: (name: string, avatarId: string, pin?: string) => Promise<boolean>;
   setActiveChild: (childId: string) => void;
   getChildById: (id: string) => Child | undefined;
+  verifyChildPin: (childId: string, pin: string) => Promise<boolean>;
 }
 
 // Create a context
@@ -106,7 +107,7 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentTeacher]);
 
-  const addChild = async (name: string, avatarId: string): Promise<boolean> => {
+  const addChild = async (name: string, avatarId: string, pin?: string): Promise<boolean> => {
     try {
       setIsLoading(true);
       
@@ -114,6 +115,16 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Reference to the children collection
       const childrenRef = ref(database, `teachers/${currentTeacher.id}/children`);
+      
+      // If a PIN is provided, validate it's not already used by another child
+      if (pin) {
+        // Check if this PIN already exists for any other child
+        const existingChildWithPin = childrenList.find(child => child.pin === pin);
+        if (existingChildWithPin) {
+          console.error("PIN already in use by another child");
+          return false;
+        }
+      }
       
       // Create a new child reference with an auto-generated key
       const newChildRef = push(childrenRef);
@@ -124,6 +135,11 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         avatarId,
         createdAt: Date.now()
       };
+      
+      // Add the PIN if provided
+      if (pin) {
+        newChild.pin = pin;
+      }
       
       // Save the child to the database
       await set(newChildRef, newChild);
@@ -152,6 +168,22 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return childrenList.find(child => child.id === id);
   };
 
+  const verifyChildPin = async (childId: string, pin: string): Promise<boolean> => {
+    try {
+      const child = childrenList.find(c => c.id === childId);
+      
+      if (!child || !child.pin) {
+        return false; // Child not found or no PIN set
+      }
+      
+      // Simple PIN verification (direct comparison)
+      return child.pin === pin;
+    } catch (error) {
+      console.error("PIN verification error:", error);
+      return false;
+    }
+  };
+
   const getRandomName = (): string => {
     return allNames[Math.floor(Math.random() * allNames.length)];
   };
@@ -165,7 +197,8 @@ export const ChildrenProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isLoading,
         addChild,
         setActiveChild,
-        getChildById
+        getChildById,
+        verifyChildPin
       }}
     >
       {children}

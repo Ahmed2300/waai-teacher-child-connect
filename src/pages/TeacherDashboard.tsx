@@ -23,8 +23,10 @@ const TeacherDashboard = () => {
   
   const [newChildName, setNewChildName] = useState("");
   const [selectedAvatarId, setSelectedAvatarId] = useState("");
+  const [childPin, setChildPin] = useState("");
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPinRequired, setIsPinRequired] = useState(false);
 
   // Check if user is authenticated
   useEffect(() => {
@@ -57,10 +59,34 @@ const TeacherDashboard = () => {
       return;
     }
 
+    // Validate PIN if PIN protection is enabled
+    if (isPinRequired) {
+      if (childPin.length < 4) {
+        toast({
+          title: "Invalid PIN",
+          description: "Please enter a 4-digit PIN for the child.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if this PIN is already used by another child
+      const existingChildWithPin = children.find(child => child.pin === childPin);
+      if (existingChildWithPin) {
+        toast({
+          title: "PIN already in use",
+          description: "This PIN is already assigned to another child. Please use a different PIN.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsAddingChild(true);
     
     try {
-      const success = await addChild(newChildName, selectedAvatarId);
+      const pinToUse = isPinRequired ? childPin : undefined;
+      const success = await addChild(newChildName, selectedAvatarId, pinToUse);
       
       if (success) {
         toast({
@@ -69,6 +95,8 @@ const TeacherDashboard = () => {
         });
         setNewChildName("");
         setSelectedAvatarId("");
+        setChildPin("");
+        setIsPinRequired(false);
         setIsDialogOpen(false);
       } else {
         toast({
@@ -100,6 +128,12 @@ const TeacherDashboard = () => {
     const allNames = [...femaleNames, ...maleNames];
     const randomName = allNames[Math.floor(Math.random() * allNames.length)];
     setNewChildName(randomName);
+  };
+
+  // Generate a random 4-digit PIN
+  const generateRandomPin = () => {
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    setChildPin(pin);
   };
 
   if (!currentTeacher) {
@@ -177,6 +211,48 @@ const TeacherDashboard = () => {
                       </Button>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="pin-required"
+                      checked={isPinRequired}
+                      onChange={(e) => setIsPinRequired(e.target.checked)}
+                      className="rounded border-gray-300 text-waai-primary focus:ring-waai-primary"
+                    />
+                    <Label htmlFor="pin-required">Require PIN for this child</Label>
+                  </div>
+                  
+                  {isPinRequired && (
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="pin">Child's PIN (4 digits)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="pin"
+                          value={childPin}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^0-9]/g, '');
+                            if (value.length <= 4) {
+                              setChildPin(value);
+                            }
+                          }}
+                          placeholder="4-digit PIN"
+                          maxLength={4}
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={generateRandomPin}
+                          type="button"
+                        >
+                          Generate
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        This PIN will be required when the child logs in.
+                      </p>
+                    </div>
+                  )}
                   
                   <AvatarSelector
                     selectedAvatarId={selectedAvatarId}
