@@ -14,6 +14,7 @@ import TeacherPin from "./pages/TeacherPin";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import ChildSelection from "./pages/ChildSelection";
 import ChildWelcome from "./pages/ChildWelcome";
+import AddChild from "./pages/AddChild";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/teacher/login" element={<TeacherLogin />} />
               <Route path="/teacher/pin" element={<TeacherPin />} />
               <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+              <Route path="/teacher/add-child" element={<AddChild />} />
               <Route path="/child/selection" element={<ChildSelection />} />
               <Route path="/child/welcome/:id" element={<ChildWelcome />} />
               <Route path="*" element={<NotFound />} />
