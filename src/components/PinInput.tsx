@@ -6,13 +6,15 @@ interface PinInputProps {
   value: string;
   onChange?: (value: string) => void;
   isHidden?: boolean;
+  onComplete?: () => void;
 }
 
 const PinInput: React.FC<PinInputProps> = ({ 
   length, 
   value, 
   onChange,
-  isHidden = true 
+  isHidden = true,
+  onComplete
 }) => {
   const [focused, setFocused] = useState(false);
 
@@ -23,6 +25,13 @@ const PinInput: React.FC<PinInputProps> = ({
   while (digits.length < length) {
     digits.push('');
   }
+
+  // Call onComplete when the PIN is fully entered
+  useEffect(() => {
+    if (value.length === length && onComplete) {
+      onComplete();
+    }
+  }, [value, length, onComplete]);
 
   const handleClick = () => {
     setFocused(true);

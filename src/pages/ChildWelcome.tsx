@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ const ChildWelcome = () => {
   const [pinVerified, setPinVerified] = useState<boolean>(false);
 
   useEffect(() => {
-    // Redirect if not authenticated
     if (!currentTeacher) {
       navigate('/teacher/login');
       return;
@@ -39,7 +37,6 @@ const ChildWelcome = () => {
           setAvatar(foundAvatar);
         }
         
-        // Check if the child has a PIN
         setPinRequired(!!foundChild.pin);
       } else {
         toast({
@@ -61,7 +58,6 @@ const ChildWelcome = () => {
       title: "Activity Starting",
       description: "The learning activities would start here.",
     });
-    // This would navigate to the actual activity in a real implementation
     setTimeout(() => {
       navigate('/child/selection');
     }, 2000);
