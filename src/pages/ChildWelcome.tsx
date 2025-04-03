@@ -1,190 +1,265 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Play } from 'lucide-react';
-import Logo from '@/components/Logo';
-import { useAuth } from '@/contexts/AuthContext';
-import { useChildren, Child, Avatar } from '@/contexts/ChildrenContext';
+import { BookOpen, Play, Star, LogOut, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
 import PinInput from '@/components/PinInput';
+import NumericKeypad from '@/components/NumericKeypad';
+import { useAuth } from '@/contexts/AuthContext';
+import { useChildren } from '@/contexts/ChildrenContext';
+import { useActivities } from '@/contexts/ActivitiesContext';
 
 const ChildWelcome = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentTeacher } = useAuth();
-  const { getChildById, availableAvatars, verifyChildPin } = useChildren();
+  const { getChildById, verifyChildPin } = useChildren();
+  const { activities } = useActivities();
   
-  const [child, setChild] = useState<Child | null>(null);
-  const [avatar, setAvatar] = useState<Avatar | null>(null);
-  const [pinRequired, setPinRequired] = useState<boolean>(false);
-  const [pin, setPin] = useState<string>("");
-  const [pinVerified, setPinVerified] = useState<boolean>(false);
+  const [child, setChild] = useState<any>(null);
+  const [isPinRequired, setIsPinRequired] = useState(false);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [showPinDialog, setShowPinDialog] = useState(false);
 
   useEffect(() => {
-    if (!currentTeacher) {
-      navigate('/teacher/login');
+    if (!currentTeacher || !id) {
+      navigate('/');
       return;
     }
     
-    if (id) {
-      const foundChild = getChildById(id);
-      if (foundChild) {
-        setChild(foundChild);
-        const foundAvatar = availableAvatars.find(a => a.id === foundChild.avatarId);
-        if (foundAvatar) {
-          setAvatar(foundAvatar);
-        }
-        
-        setPinRequired(!!foundChild.pin);
-      } else {
-        toast({
-          title: "Child not found",
-          description: "Could not find this child profile.",
-          variant: "destructive",
-        });
-        navigate('/child/selection');
-      }
+    const childData = getChildById(id);
+    if (!childData) {
+      toast({
+        title: "Child not found",
+        description: "This child profile could not be found.",
+        variant: "destructive",
+      });
+      navigate('/child/selection');
+      return;
     }
-  }, [id, currentTeacher, getChildById, availableAvatars, navigate, toast]);
+    
+    setChild(childData);
+    setIsPinRequired(!!childData.pin);
+    
+    // If PIN is required, show the dialog
+    if (childData.pin) {
+      setShowPinDialog(true);
+    } else {
+      setIsVerified(true);
+    }
+  }, [currentTeacher, id, getChildById, navigate, toast]);
+
+  const handlePinDigitPress = (digit: number) => {
+    if (pin.length < 4) {
+      setPin(prev => prev + digit.toString());
+      setPinError('');
+    }
+  };
+
+  const handlePinBackspace = () => {
+    setPin(prev => prev.slice(0, -1));
+    setPinError('');
+  };
+
+  const handlePinComplete = async () => {
+    if (pin.length !== 4) return;
+    
+    setIsVerifying(true);
+    
+    try {
+      const isValid = await verifyChildPin(child.id, pin);
+      
+      if (isValid) {
+        setIsVerified(true);
+        setShowPinDialog(false);
+      } else {
+        setPinError('Incorrect PIN. Please try again.');
+        setPin('');
+      }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setPinError('An error occurred. Please try again.');
+      setPin('');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleStartActivity = (activityId: string) => {
+    navigate(`/child/activity/${child.id}/${activityId}`);
+  };
 
   const handleBackToSelection = () => {
     navigate('/child/selection');
   };
 
-  const handleStartActivity = () => {
-    toast({
-      title: "Activity Starting",
-      description: "The learning activities would start here.",
-    });
-    setTimeout(() => {
-      navigate('/child/selection');
-    }, 2000);
-  };
+  // If child not found or loaded yet
+  if (!child) {
+    return null;
+  }
 
-  const handlePinSubmit = async () => {
-    if (!child) return;
-    
-    const isValid = await verifyChildPin(child.id, pin);
-    if (isValid) {
-      setPinVerified(true);
-      toast({
-        title: "PIN Verified",
-        description: "Welcome to your learning journey!",
-      });
-    } else {
-      toast({
-        title: "Incorrect PIN",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-      setPin("");
-    }
-  };
-
-  if (!child || !avatar) {
+  // If PIN verification is required but not verified yet
+  if (isPinRequired && !isVerified) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-blue-50 flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
+      <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Enter PIN</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center py-4">
+            <Avatar className="h-20 w-20 mb-4">
+              <AvatarImage src={child.avatarUrl} alt={child.name} />
+              <AvatarFallback>{child.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            
+            <h2 className="text-xl font-bold mb-6">Hi, {child.name}!</h2>
+            
+            <p className="text-gray-600 mb-4">Please enter your PIN to continue:</p>
+            
+            <PinInput 
+              length={4} 
+              value={pin} 
+              onChange={setPin}
+              onComplete={handlePinComplete}
+              error={!!pinError}
+            />
+            
+            {pinError && (
+              <p className="text-red-500 mt-2">{pinError}</p>
+            )}
+            
+            <NumericKeypad 
+              onDigitPress={handlePinDigitPress}
+              onBackspace={handlePinBackspace}
+              onConfirm={handlePinComplete}
+              disabled={isVerifying}
+            />
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={handleBackToSelection}
+              className="w-full"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Back to Selection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   }
 
+  // Main welcome screen (after PIN verification if required)
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center">
-          <Button
-            variant="ghost"
-            className="text-waai-primary hover:text-waai-accent1"
-            onClick={handleBackToSelection}
-          >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Back
-          </Button>
-          
-          <Logo />
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50">
+      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <Avatar className="h-10 w-10 mr-3">
+            <AvatarImage src={child.avatarUrl} alt={child.name} />
+            <AvatarFallback>{child.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <h1 className="font-bold text-xl text-waai-primary">Hello, {child.name}!</h1>
         </div>
-
-        <div className="flex flex-col items-center justify-center mt-12 max-w-md mx-auto">
-          {pinRequired && !pinVerified ? (
-            <Card className="w-full border-4 border-waai-accent1/30 shadow-lg">
-              <CardContent className="p-8 flex flex-col items-center">
-                <div className="w-24 h-24 mb-6">
-                  <img
-                    src={avatar.url}
-                    alt={child.name}
-                    className="w-full h-full object-cover rounded-full border-4 border-waai-accent1"
-                  />
-                </div>
-                
-                <h1 className="text-2xl font-bold mb-4 text-center">
-                  Hello, <span className="text-waai-primary">{child.name}</span>!
-                </h1>
-                
-                <p className="text-lg text-gray-700 mb-6 text-center">
-                  Please enter your PIN to continue
+        
+        <Button 
+          variant="ghost" 
+          onClick={handleBackToSelection}
+          className="text-gray-500"
+        >
+          <Home className="h-5 w-5" />
+        </Button>
+      </header>
+      
+      <main className="container mx-auto px-4 py-8">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex justify-center mb-8">
+            <img 
+              src="https://api.dicebear.com/7.x/bottts/svg?seed=Waai" 
+              alt="Waai character" 
+              className="h-32 w-32"
+            />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-center mb-8">
+            What would you like to learn today?
+          </h2>
+          
+          {activities.length === 0 ? (
+            <Card className="max-w-lg mx-auto text-center py-8">
+              <CardContent>
+                <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-medium mb-2">No Activities Available</h3>
+                <p className="text-gray-600 mb-6">
+                  Your teacher hasn't created any learning activities yet.
                 </p>
-                
-                <div className="w-full mb-6">
-                  <PinInput 
-                    value={pin} 
-                    onChange={setPin} 
-                    length={4} 
-                    onComplete={handlePinSubmit}
-                  />
-                </div>
-                
-                <Button 
-                  onClick={handlePinSubmit}
-                  size="lg" 
-                  className="w-full bg-waai-secondary hover:bg-waai-accent2 text-white rounded-full h-14 text-xl"
-                  disabled={pin.length < 4}
+                <Button
+                  onClick={handleBackToSelection}
+                  className="bg-waai-accent1 hover:bg-waai-primary"
                 >
-                  Unlock
+                  Go Back
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <Card className="w-full border-4 border-waai-accent1/30 shadow-lg">
-              <CardContent className="p-8 flex flex-col items-center">
-                <div className="w-32 h-32 mb-6 animate-bounce-slow">
-                  <img
-                    src={avatar.url}
-                    alt={child.name}
-                    className="w-full h-full object-cover rounded-full border-4 border-waai-accent1"
-                  />
-                </div>
-                
-                <h1 className="text-4xl font-bold mb-4 text-center">
-                  Welcome, <span className="text-waai-primary">{child.name}</span>!
-                </h1>
-                
-                <p className="text-lg text-gray-700 mb-8 text-center">
-                  Are you ready for today's adventure?
-                </p>
-                
-                <Button 
-                  onClick={handleStartActivity}
-                  size="lg" 
-                  className="w-full bg-waai-secondary hover:bg-waai-accent2 text-white rounded-full h-14 text-xl"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {activities.map((activity) => (
+                <motion.div
+                  key={activity.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                 >
-                  <Play className="mr-2 h-6 w-6" />
-                  Let's Play!
-                </Button>
-              </CardContent>
-            </Card>
+                  <Card className="border-2 border-waai-primary/20 hover:border-waai-primary cursor-pointer h-full">
+                    <CardContent className="p-6 flex flex-col h-full">
+                      <div className="mb-3 flex justify-between items-start">
+                        <div className="p-2 rounded-full bg-waai-primary/10 text-waai-primary">
+                          <BookOpen className="h-6 w-6" />
+                        </div>
+                        <div className="flex">
+                          {[1, 2, 3].map((star) => (
+                            <Star key={star} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-xl font-bold mb-2">{activity.title}</h3>
+                      
+                      <p className="text-gray-600 mb-4 flex-grow">{activity.goals}</p>
+                      
+                      <div className="text-sm text-gray-500 mb-4">
+                        {activity.questions.length} Questions
+                      </div>
+                      
+                      <Button
+                        onClick={() => handleStartActivity(activity.id)}
+                        className="w-full bg-waai-secondary hover:bg-waai-accent2"
+                      >
+                        <Play className="mr-2 h-5 w-5" />
+                        Start Learning!
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
           )}
-          
-          <div className="mt-8 animate-pulse">
-            <svg className="w-12 h-12 text-waai-primary mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-      </div>
+        </motion.div>
+      </main>
     </div>
   );
 };

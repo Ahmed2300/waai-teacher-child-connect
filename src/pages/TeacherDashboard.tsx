@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,19 +6,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, LogOut, User, Settings, UserPlus } from 'lucide-react';
+import { PlusCircle, LogOut, User, Settings, UserPlus, BookOpen, Play, Calendar, BarChart4 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import ChildCard from '@/components/ChildCard';
 import AvatarSelector from '@/components/AvatarSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChildren } from '@/contexts/ChildrenContext';
+import { useActivities } from '@/contexts/ActivitiesContext';
 
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentTeacher, logout } = useAuth();
   const { children, addChild, isLoading: isChildrenLoading } = useChildren();
+  const { activities, isLoading: isActivitiesLoading } = useActivities();
   
   const [newChildName, setNewChildName] = useState("");
   const [selectedAvatarId, setSelectedAvatarId] = useState("");
@@ -28,7 +30,6 @@ const TeacherDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPinRequired, setIsPinRequired] = useState(false);
 
-  // Check if user is authenticated
   useEffect(() => {
     if (!currentTeacher) {
       navigate('/teacher/login');
@@ -59,7 +60,6 @@ const TeacherDashboard = () => {
       return;
     }
 
-    // Validate PIN if PIN protection is enabled
     if (isPinRequired) {
       if (childPin.length < 4) {
         toast({
@@ -70,7 +70,6 @@ const TeacherDashboard = () => {
         return;
       }
 
-      // Check if this PIN is already used by another child
       const existingChildWithPin = children.find(child => child.pin === childPin);
       if (existingChildWithPin) {
         toast({
@@ -121,23 +120,25 @@ const TeacherDashboard = () => {
     navigate('/child/selection');
   };
 
-  // Generate a random name from our lists
-  const generateRandomName = () => {
-    const femaleNames = ['Lama', 'Sara', 'Noor', 'Reem', 'Hind', 'Jana', 'Malak'];
-    const maleNames = ['Omar', 'Ahmed', 'Youssef', 'Karim', 'Ali', 'Ziad', 'Hassan'];
-    const allNames = [...femaleNames, ...maleNames];
-    const randomName = allNames[Math.floor(Math.random() * allNames.length)];
-    setNewChildName(randomName);
+  const navigateToCreateActivity = () => {
+    navigate('/teacher/create-activity');
   };
 
-  // Generate a random 4-digit PIN
-  const generateRandomPin = () => {
-    const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    setChildPin(pin);
+  const viewActivityDetails = (activityId: string) => {
+    navigate(`/teacher/activity/${activityId}`);
+  };
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   if (!currentTeacher) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -167,7 +168,7 @@ const TeacherDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold mb-2">Teacher Dashboard</h1>
-            <p className="text-gray-600">Manage children profiles and start learning sessions</p>
+            <p className="text-gray-600">Manage children profiles and educational activities</p>
           </div>
           
           <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3">
@@ -178,6 +179,14 @@ const TeacherDashboard = () => {
             >
               <User className="mr-2 h-5 w-5" />
               Start Child Session
+            </Button>
+            
+            <Button
+              onClick={navigateToCreateActivity}
+              className="bg-waai-secondary hover:bg-waai-accent2"
+            >
+              <BookOpen className="mr-2 h-5 w-5" />
+              Create Activity
             </Button>
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -276,39 +285,136 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Children Profiles</h2>
-            <span className="text-sm text-gray-500">{children.length} total</span>
-          </div>
+        <Tabs defaultValue="activities" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="activities" className="flex items-center">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Activities
+            </TabsTrigger>
+            <TabsTrigger value="children" className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+              Children
+            </TabsTrigger>
+          </TabsList>
           
-          {isChildrenLoading ? (
-            <div className="text-center py-8">
-              <p>Loading children profiles...</p>
+          <TabsContent value="activities">
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">Educational Activities</h2>
+                <span className="text-sm text-gray-500">{activities.length} total</span>
+              </div>
+              
+              {isActivitiesLoading ? (
+                <div className="text-center py-8">
+                  <p>Loading activities...</p>
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+                  <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Activities Created Yet</h3>
+                  <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                    Create your first educational activity to start teaching with Waai.
+                  </p>
+                  <Button 
+                    className="bg-waai-primary hover:bg-waai-accent1"
+                    onClick={navigateToCreateActivity}
+                  >
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Create Activity
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activities.map((activity) => (
+                    <Card 
+                      key={activity.id} 
+                      className="border-waai-primary/10 hover:border-waai-primary/30 transition-all hover:shadow-md"
+                    >
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{activity.title}</CardTitle>
+                        <p className="text-sm text-gray-500 flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          Created {formatDate(activity.createdAt)}
+                        </p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-700 line-clamp-2">
+                            {activity.goals}
+                          </p>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                          <span className="flex items-center">
+                            <BookOpen className="h-4 w-4 mr-1" />
+                            {activity.questions.length} questions
+                          </span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-waai-primary"
+                            onClick={() => viewActivityDetails(activity.id)}
+                          >
+                            <BarChart4 className="h-4 w-4 mr-1" />
+                            Details
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-waai-primary hover:bg-waai-accent1"
+                            onClick={() => navigate(`/teacher/activity/${activity.id}`)}
+                          >
+                            <Play className="h-4 w-4 mr-1" />
+                            Start
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : children.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
-              <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Children Added Yet</h3>
-              <p className="text-gray-500 mb-4 max-w-md mx-auto">
-                Add your first child profile to get started with learning sessions.
-              </p>
-              <Button 
-                className="bg-waai-primary hover:bg-waai-accent1"
-                onClick={() => setIsDialogOpen(true)}
-              >
-                <PlusCircle className="mr-2 h-5 w-5" />
-                Add Child
-              </Button>
+          </TabsContent>
+          
+          <TabsContent value="children">
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold">Children Profiles</h2>
+                <span className="text-sm text-gray-500">{children.length} total</span>
+              </div>
+              
+              {isChildrenLoading ? (
+                <div className="text-center py-8">
+                  <p>Loading children profiles...</p>
+                </div>
+              ) : children.length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+                  <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Children Added Yet</h3>
+                  <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                    Add your first child profile to get started with learning sessions.
+                  </p>
+                  <Button 
+                    className="bg-waai-primary hover:bg-waai-accent1"
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Add Child
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {children.map((child) => (
+                    <ChildCard key={child.id} child={child} />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {children.map((child) => (
-                <ChildCard key={child.id} child={child} />
-              ))}
-            </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
