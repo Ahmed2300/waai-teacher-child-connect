@@ -165,6 +165,34 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         });
       }
       
+      const answersSnapshot = await get(ref(
+        database, 
+        `teachers/${currentTeacher.id}/children/${childId}/progress/${activityId}/answers`
+      ));
+      
+      if (answersSnapshot.exists()) {
+        const answers = answersSnapshot.val();
+        const totalAnswered = Object.keys(answers).length;
+        const correctAnswers = Object.values(answers).filter((answer: any) => answer.isCorrect).length;
+        
+        if (totalAnswered > 0) {
+          const activitySnapshot = await get(ref(
+            database,
+            `teachers/${currentTeacher.id}/activities/${activityId}`
+          ));
+          
+          if (activitySnapshot.exists()) {
+            const activityData = activitySnapshot.val();
+            const totalQuestions = activityData.questions ? Object.keys(activityData.questions).length : 0;
+            
+            await update(activityProgressRef, {
+              score: correctAnswers,
+              totalQuestions: totalQuestions
+            });
+          }
+        }
+      }
+      
       return true;
     } catch (error) {
       console.error("Save progress error:", error);
@@ -187,26 +215,36 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (activityId) {
         const progressData = snapshot.val();
         
+        let score = 0;
+        if (progressData.answers) {
+          score = Object.values(progressData.answers).filter((answer: any) => answer.isCorrect).length;
+        }
+        
         return [{
           activityId,
           childId,
           answers: progressData.answers || {},
           startedAt: progressData.startedAt || 0,
           completedAt: progressData.completedAt,
-          score: progressData.score
+          score: score
         }];
       } else {
         const progressData = snapshot.val();
         const progressArray: ActivityProgress[] = [];
         
         Object.keys(progressData).forEach((actId) => {
+          let score = 0;
+          if (progressData[actId].answers) {
+            score = Object.values(progressData[actId].answers).filter((answer: any) => answer.isCorrect).length;
+          }
+          
           progressArray.push({
             activityId: actId,
             childId,
             answers: progressData[actId].answers || {},
             startedAt: progressData[actId].startedAt || 0,
             completedAt: progressData[actId].completedAt,
-            score: progressData[actId].score
+            score: score
           });
         });
         

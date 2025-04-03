@@ -17,7 +17,7 @@ const ChildActivity = () => {
   const { toast } = useToast();
   const { currentTeacher } = useAuth();
   const { getChildById } = useChildren();
-  const { getActivityById, saveProgress } = useActivities();
+  const { getActivityById, saveProgress, getChildProgress } = useActivities();
   
   const [child, setChild] = useState<any>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -27,6 +27,7 @@ const ChildActivity = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [answeredQuestions, setAnsweredQuestions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!currentTeacher || !childId || !activityId) {
@@ -49,8 +50,27 @@ const ChildActivity = () => {
     
     setChild(childData);
     setActivity(activityData);
+    
+    // Initialize the score
     setScore({ correct: 0, total: activityData.questions.length });
-  }, [currentTeacher, childId, activityId, getChildById, getActivityById, navigate, toast]);
+    
+    // Check if there's any progress already for this activity
+    const loadProgress = async () => {
+      const progressData = await getChildProgress(childId, activityId);
+      if (progressData && progressData.length > 0 && progressData[0].answers) {
+        const answers = progressData[0].answers;
+        const answered = Object.keys(answers);
+        setAnsweredQuestions(answered);
+        
+        // Calculate correct answers
+        const correctCount = Object.values(answers).filter(a => a.isCorrect).length;
+        setScore(prev => ({ ...prev, correct: correctCount }));
+      }
+    };
+    
+    loadProgress();
+    
+  }, [currentTeacher, childId, activityId, getChildById, getActivityById, getChildProgress, navigate, toast]);
 
   const handleSelectOption = async (optionId: string) => {
     if (showFeedback) return; // Prevent changing answer during feedback
@@ -64,8 +84,14 @@ const ChildActivity = () => {
     
     if (!selectedOption) return;
     
-    setIsCorrect(selectedOption.isCorrect);
+    const isAnswerCorrect = selectedOption.isCorrect;
+    setIsCorrect(isAnswerCorrect);
     setShowFeedback(true);
+    
+    // Track this question as answered
+    if (!answeredQuestions.includes(currentQuestion.id)) {
+      setAnsweredQuestions(prev => [...prev, currentQuestion.id]);
+    }
     
     // Save progress to the database
     await saveProgress(
@@ -73,11 +99,11 @@ const ChildActivity = () => {
       activity.id,
       currentQuestion.id,
       optionId,
-      selectedOption.isCorrect
+      isAnswerCorrect
     );
     
-    // Update score
-    if (selectedOption.isCorrect) {
+    // Update score - only count if this is the first time answering this question
+    if (!answeredQuestions.includes(currentQuestion.id) && isAnswerCorrect) {
       setScore(prev => ({ ...prev, correct: prev.correct + 1 }));
     }
     
@@ -125,6 +151,12 @@ const ChildActivity = () => {
 
   // Render the completion screen if activity is complete
   if (completed) {
+    // Calculate final score using the tracked correct answers and total questions
+    const finalScore = {
+      correct: score.correct,
+      total: activity.questions.length
+    };
+    
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 flex flex-col">
         <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
@@ -159,12 +191,12 @@ const ChildActivity = () => {
                 
                 <div className="bg-waai-primary/10 rounded-lg p-4 mb-8">
                   <p className="text-2xl font-bold">
-                    Score: {score.correct} / {score.total}
+                    Score: {finalScore.correct} / {finalScore.total}
                   </p>
                   <div className="h-4 bg-gray-200 rounded-full mt-2">
                     <div 
                       className="h-4 bg-waai-primary rounded-full"
-                      style={{ width: `${(score.correct / score.total) * 100}%` }}
+                      style={{ width: `${(finalScore.correct / finalScore.total) * 100}%` }}
                     ></div>
                   </div>
                 </div>

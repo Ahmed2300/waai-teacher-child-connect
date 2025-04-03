@@ -86,11 +86,22 @@ const ActivityResults = () => {
   const calculateScorePercentage = () => {
     if (!progress || !activity) return 0;
     
-    const totalAnswered = Object.keys(progress.answers).length;
-    if (totalAnswered === 0) return 0;
+    const answersCount = Object.keys(progress.answers).length;
+    if (answersCount === 0) return 0;
+    
+    // Count correct answers
+    const correctAnswers = Object.values(progress.answers).filter(answer => answer.isCorrect).length;
+    
+    // Calculate percentage based on total number of questions in the activity
+    return Math.round((correctAnswers / activity.questions.length) * 100);
+  };
+
+  // Function to get actual score as a fraction
+  const getScoreFraction = () => {
+    if (!progress || !activity) return '0 / 0';
     
     const correctAnswers = Object.values(progress.answers).filter(answer => answer.isCorrect).length;
-    return Math.round((correctAnswers / totalAnswered) * 100);
+    return `${correctAnswers} / ${activity.questions.length}`;
   };
 
   if (isLoading || !child || !activity) {
@@ -147,7 +158,7 @@ const ActivityResults = () => {
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
                   <p className="text-gray-500 mb-1">Score</p>
                   <p className="text-2xl font-bold">
-                    {progress ? calculateScorePercentage() : 0}%
+                    {getScoreFraction()} ({calculateScorePercentage()}%)
                   </p>
                 </div>
                 
