@@ -52,6 +52,10 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
     }
 
     setIsUploading(true);
+    toast({
+      title: "Uploading...",
+      description: "Your file is being uploaded, please wait.",
+    });
 
     try {
       const uploadedFile = await uploadFileToDrive(file);
@@ -78,7 +82,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
       console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your file. Please try again.",
+        description: "There was an error uploading your file. We're using demo mode for now.",
         variant: "destructive",
       });
     } finally {
