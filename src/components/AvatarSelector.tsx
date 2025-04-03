@@ -6,24 +6,31 @@ import { useChildren, Avatar as AvatarType } from '@/contexts/ChildrenContext';
 interface AvatarSelectorProps {
   selectedAvatarId: string;
   onSelect: (avatarId: string) => void;
+  avatars?: AvatarType[];
+  disabled?: boolean;
 }
 
 const AvatarSelector: React.FC<AvatarSelectorProps> = ({ 
   selectedAvatarId, 
-  onSelect 
+  onSelect,
+  avatars,
+  disabled = false
 }) => {
+  // If avatars prop is not provided, use the context
   const { availableAvatars } = useChildren();
+  const avatarsToUse = avatars || availableAvatars;
 
   return (
     <div className="mt-4">
       <h3 className="text-lg font-medium mb-3">Select an avatar</h3>
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-6">
-        {availableAvatars.map((avatar) => (
+        {avatarsToUse.map((avatar) => (
           <div 
             key={avatar.id}
-            onClick={() => onSelect(avatar.id)}
+            onClick={() => !disabled && onSelect(avatar.id)}
             className={`
               cursor-pointer p-2 rounded-lg transition-all
+              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
               ${selectedAvatarId === avatar.id 
                 ? 'bg-waai-primary/20 ring-2 ring-waai-primary' 
                 : 'hover:bg-gray-100'

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,17 +19,14 @@ const AddChild = () => {
   const { currentTeacher } = useAuth();
   const { addChild, availableAvatars, isLoading } = useChildren();
   
-  // Child information
   const [childName, setChildName] = useState('');
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
   
-  // PIN setup
   const [enablePin, setEnablePin] = useState(false);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [isConfirmingPin, setIsConfirmingPin] = useState(false);
   
-  // Form state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -39,7 +35,6 @@ const AddChild = () => {
       return;
     }
     
-    // Set default avatar if none selected
     if (!selectedAvatarId && availableAvatars.length > 0) {
       setSelectedAvatarId(availableAvatars[0].id);
     }
@@ -88,7 +83,6 @@ const AddChild = () => {
       return;
     }
     
-    // Confirm the PIN matches
     if (pin !== confirmPin) {
       toast({
         title: "PINs don't match",
@@ -100,13 +94,11 @@ const AddChild = () => {
       return;
     }
     
-    // PIN setup successful
     toast({
       title: "PIN set successfully",
       description: "The child profile will be protected with this PIN.",
     });
     
-    // Ready to submit the form
     handleSubmit();
   };
 
@@ -254,7 +246,6 @@ const AddChild = () => {
                     <div className="space-y-2">
                       <Label>Select an Avatar</Label>
                       <AvatarSelector
-                        avatars={availableAvatars}
                         selectedAvatarId={selectedAvatarId}
                         onSelect={handleAvatarSelect}
                         disabled={isSubmitting}
