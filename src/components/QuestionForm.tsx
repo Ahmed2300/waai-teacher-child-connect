@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Trash2, HelpCircle } from 'lucide-react';
-import { Question } from '@/types/Activity';
+import { Trash2, HelpCircle, Image } from 'lucide-react';
+import { Question, MediaFile } from '@/types/Activity';
+import MediaUploader from './MediaUploader';
 
 interface QuestionFormProps {
   question: Question;
@@ -14,6 +15,7 @@ interface QuestionFormProps {
   onOptionTextChange: (questionId: string, optionId: string, text: string) => void;
   onCorrectOptionChange: (questionId: string, optionId: string) => void;
   onRemove: (id: string) => void;
+  onMediaChange: (questionId: string, media?: MediaFile) => void;
 }
 
 const QuestionForm: React.FC<QuestionFormProps> = ({
@@ -22,9 +24,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
   onTextChange,
   onOptionTextChange,
   onCorrectOptionChange,
-  onRemove
+  onRemove,
+  onMediaChange
 }) => {
   const isTrueFalse = question.type === 'true_false';
+  
+  const handleMediaUploaded = (media: MediaFile) => {
+    onMediaChange(question.id, media);
+  };
+  
+  const handleRemoveMedia = () => {
+    onMediaChange(question.id, undefined);
+  };
   
   return (
     <Card className="border-waai-accent1/20">
@@ -52,6 +63,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             value={question.text}
             onChange={(e) => onTextChange(question.id, e.target.value)}
             placeholder={isTrueFalse ? "Enter true/false statement..." : "Enter question..."}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Question Media (Optional)
+          </Label>
+          <MediaUploader 
+            onFileUploaded={handleMediaUploaded}
+            currentMedia={question.media}
+            onRemoveMedia={handleRemoveMedia}
           />
         </div>
         

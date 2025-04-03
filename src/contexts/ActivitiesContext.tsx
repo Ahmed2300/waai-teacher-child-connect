@@ -1,15 +1,14 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { database } from "@/lib/firebase";
 import { ref, set, push, onValue, get, update, remove } from "firebase/database";
-import { Activity, Question, Option, ActivityProgress } from "@/types/Activity";
+import { Activity, Question, Option, ActivityProgress, MediaFile } from "@/types/Activity";
 
 interface ActivitiesContextType {
   activities: Activity[];
   isLoading: boolean;
   currentActivity: Activity | null;
-  createActivity: (title: string, goals: string, questions: Question[]) => Promise<string | null>;
+  createActivity: (title: string, goals: string, questions: Question[], coverMedia?: MediaFile) => Promise<string | null>;
   updateActivity: (activityId: string, data: Partial<Omit<Activity, 'id'>>) => Promise<boolean>;
   deleteActivity: (activityId: string) => Promise<boolean>;
   getActivityById: (activityId: string) => Activity | undefined;
@@ -32,21 +31,17 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isLoading, setIsLoading] = useState(true);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
 
-  // Load activities from Firebase when the teacher changes
   useEffect(() => {
     if (currentTeacher) {
       setIsLoading(true);
       
-      // Reference to the activities in the database
       const activitiesRef = ref(database, `teachers/${currentTeacher.id}/activities`);
       
-      // Listen for changes to the activities
       const unsubscribe = onValue(activitiesRef, (snapshot) => {
         if (snapshot.exists()) {
           const activitiesData = snapshot.val();
           const activitiesArray: Activity[] = [];
           
-          // Convert object to array
           Object.keys(activitiesData).forEach((key) => {
             activitiesArray.push({
               id: key,
@@ -71,26 +66,28 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [currentTeacher]);
 
-  const createActivity = async (title: string, goals: string, questions: Question[]): Promise<string | null> => {
+  const createActivity = async (
+    title: string, 
+    goals: string, 
+    questions: Question[],
+    coverMedia?: MediaFile
+  ): Promise<string | null> => {
     try {
       if (!currentTeacher) return null;
       
-      // Reference to the activities collection
       const activitiesRef = ref(database, `teachers/${currentTeacher.id}/activities`);
       
-      // Create a new activity reference with an auto-generated key
       const newActivityRef = push(activitiesRef);
       
-      // The activity object to save
       const newActivity: Omit<Activity, 'id'> = {
         title,
         goals,
         questions,
         createdAt: Date.now(),
-        teacherId: currentTeacher.id
+        teacherId: currentTeacher.id,
+        ...(coverMedia && { coverMedia })
       };
       
-      // Save the activity to the database
       await set(newActivityRef, newActivity);
       
       return newActivityRef.key;
@@ -106,7 +103,6 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       const activityRef = ref(database, `teachers/${currentTeacher.id}/activities/${activityId}`);
       
-      // Update the activity
       await update(activityRef, data);
       
       return true;
@@ -122,7 +118,6 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       const activityRef = ref(database, `teachers/${currentTeacher.id}/activities/${activityId}`);
       
-      // Delete the activity
       await remove(activityRef);
       
       return true;
@@ -146,20 +141,17 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       if (!currentTeacher) return false;
       
-      // Reference to the progress record
       const progressRef = ref(
         database, 
         `teachers/${currentTeacher.id}/children/${childId}/progress/${activityId}/answers/${questionId}`
       );
       
-      // Save the progress
       await set(progressRef, {
         selectedOptionId,
         isCorrect,
         answeredAt: Date.now()
       });
       
-      // Update the start time if it's the first answer
       const activityProgressRef = ref(
         database, 
         `teachers/${currentTeacher.id}/children/${childId}/progress/${activityId}`
@@ -193,7 +185,6 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!snapshot.exists()) return [];
       
       if (activityId) {
-        // Single activity progress
         const progressData = snapshot.val();
         
         return [{
@@ -205,7 +196,6 @@ export const ActivitiesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           score: progressData.score
         }];
       } else {
-        // All activity progress
         const progressData = snapshot.val();
         const progressArray: ActivityProgress[] = [];
         

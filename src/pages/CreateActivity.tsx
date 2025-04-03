@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Save, BookOpen, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, BookOpen, HelpCircle, FileImage } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useActivities } from '@/contexts/ActivitiesContext';
-import { Question, QuestionType, Option } from '@/types/Activity';
+import { Question, QuestionType, Option, MediaFile } from '@/types/Activity';
 import QuestionForm from '@/components/QuestionForm';
+import MediaUploader from '@/components/MediaUploader';
 
 const CreateActivity = () => {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ const CreateActivity = () => {
   const [title, setTitle] = useState('');
   const [goals, setGoals] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [coverMedia, setCoverMedia] = useState<MediaFile | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check if user is authenticated
@@ -91,6 +93,12 @@ const CreateActivity = () => {
             ) 
           } 
         : q
+    ));
+  };
+
+  const handleQuestionMediaChange = (questionId: string, media?: MediaFile) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId ? { ...q, media } : q
     ));
   };
 
@@ -171,7 +179,7 @@ const CreateActivity = () => {
     setIsSubmitting(true);
     
     try {
-      const activityId = await createActivity(title, goals, questions);
+      const activityId = await createActivity(title, goals, questions, coverMedia);
       
       if (activityId) {
         toast({
@@ -252,6 +260,18 @@ const CreateActivity = () => {
                   className="min-h-[100px]"
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <FileImage className="h-4 w-4" />
+                  Cover Image/Video (Optional)
+                </Label>
+                <MediaUploader 
+                  onFileUploaded={setCoverMedia}
+                  currentMedia={coverMedia}
+                  onRemoveMedia={() => setCoverMedia(undefined)}
+                />
+              </div>
             </CardContent>
           </Card>
           
@@ -296,6 +316,7 @@ const CreateActivity = () => {
                   onOptionTextChange={handleOptionTextChange}
                   onCorrectOptionChange={handleCorrectOptionChange}
                   onRemove={handleRemoveQuestion}
+                  onMediaChange={handleQuestionMediaChange}
                 />
               ))}
             </div>

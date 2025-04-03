@@ -8,11 +8,20 @@ export interface Option {
   isCorrect: boolean;
 }
 
+export interface MediaFile {
+  id: string;
+  name: string;
+  url: string;
+  thumbnailUrl?: string;
+  type: 'image' | 'video';
+}
+
 export interface Question {
   id: string;
   text: string;
   type: QuestionType;
   options: Option[];
+  media?: MediaFile; // Optional media for the question
 }
 
 export interface Activity {
@@ -22,6 +31,7 @@ export interface Activity {
   questions: Question[];
   createdAt: number;
   teacherId: string;
+  coverMedia?: MediaFile; // Optional cover media for the activity
 }
 
 export interface ActivityProgress {
