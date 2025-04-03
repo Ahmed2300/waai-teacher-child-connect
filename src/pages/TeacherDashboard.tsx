@@ -16,6 +16,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChildren } from '@/contexts/ChildrenContext';
 import { useActivities } from '@/contexts/ActivitiesContext';
 
+const generateRandomName = () => {
+  const femaleNames = ['Lama', 'Sara', 'Noor', 'Reem', 'Hind', 'Jana', 'Malak'];
+  const maleNames = ['Omar', 'Ahmed', 'Youssef', 'Karim', 'Ali', 'Ziad', 'Hassan'];
+  const allNames = [...femaleNames, ...maleNames];
+  return allNames[Math.floor(Math.random() * allNames.length)];
+};
+
+const generateRandomPin = () => {
+  // Generate a random 4-digit PIN
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();

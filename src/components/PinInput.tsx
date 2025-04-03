@@ -7,6 +7,7 @@ interface PinInputProps {
   onChange?: (value: string) => void;
   isHidden?: boolean;
   onComplete?: () => void;
+  error?: boolean;
 }
 
 const PinInput: React.FC<PinInputProps> = ({ 
@@ -14,7 +15,8 @@ const PinInput: React.FC<PinInputProps> = ({
   value, 
   onChange,
   isHidden = true,
-  onComplete
+  onComplete,
+  error = false
 }) => {
   const [focused, setFocused] = useState(false);
 
@@ -58,6 +60,7 @@ const PinInput: React.FC<PinInputProps> = ({
           className={`
             w-14 h-14 flex items-center justify-center
             border-2 ${digit ? 'border-waai-primary' : 'border-gray-300'}
+            ${error ? 'border-red-500' : ''}
             rounded-lg text-2xl font-semibold select-none
           `}
         >
