@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import Logo from '@/components/Logo';
@@ -17,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
+  rememberMe: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -24,20 +26,43 @@ type FormValues = z.infer<typeof formSchema>;
 const TeacherLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isRemembered, checkRememberedLogin } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingRemembered, setCheckingRemembered] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false,
     },
   });
 
+  // Check for remembered login when component mounts
+  useEffect(() => {
+    const attemptAutoLogin = async () => {
+      if (isRemembered()) {
+        const success = await checkRememberedLogin();
+        
+        if (success) {
+          toast({
+            title: "Welcome back!",
+            description: "You've been automatically logged in.",
+          });
+          navigate("/teacher/pin");
+        }
+      }
+      
+      setCheckingRemembered(false);
+    };
+    
+    attemptAutoLogin();
+  }, [navigate, toast, checkRememberedLogin, isRemembered]);
+
   const onSubmit = async (data: FormValues) => {
     try {
-      const success = await login(data.email, data.password);
+      const success = await login(data.email, data.password, data.rememberMe);
       
       if (success) {
         toast({
@@ -65,6 +90,18 @@ const TeacherLogin = () => {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Show a loading state while checking for remembered login
+  if (checkingRemembered) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md text-center">
+          <Logo size="large" />
+          <p className="mt-4 text-gray-600">Checking login status...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -132,8 +169,32 @@ const TeacherLogin = () => {
                     </FormItem>
                   )}
                 />
-                
-                <div className="flex justify-end">
+
+                <div className="flex items-center justify-between">
+                  <FormField
+                    control={form.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                        <FormControl>
+                          <Checkbox 
+                            checked={field.value} 
+                            onCheckedChange={field.onChange} 
+                            id="rememberMe" 
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel 
+                            htmlFor="rememberMe" 
+                            className="text-sm font-normal cursor-pointer"
+                          >
+                            Remember me
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  
                   <Link to="/forgot-password" className="text-sm text-waai-primary hover:text-waai-accent1">
                     Forgot password?
                   </Link>

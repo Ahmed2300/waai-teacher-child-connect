@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +29,17 @@ const TeacherPin = () => {
 
     // Check if teacher has a PIN set up
     setIsSettingUp(!currentTeacher.hasPin);
-  }, [currentTeacher, navigate]);
+    
+    // If teacher doesn't have a PIN, we'll set one up
+    // Otherwise, we'll verify the PIN
+    if (currentTeacher.hasPin === false) {
+      // If we're setting up a PIN, let's show a welcome message
+      toast({
+        title: "Welcome!",
+        description: "Please set up a 4-digit PIN for quick access to your account.",
+      });
+    }
+  }, [currentTeacher, navigate, toast]);
 
   const handleDigitPress = (digit: number) => {
     if (isConfirming) {
