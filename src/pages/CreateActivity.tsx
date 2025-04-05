@@ -56,8 +56,8 @@ const CreateActivity = () => {
       text: '',
       type: 'true_false',
       options: [
-        { id: `opt_${Date.now()}_true`, text: 'True', isCorrect: false },
-        { id: `opt_${Date.now()}_false`, text: 'False', isCorrect: false }
+        { id: `opt_${Date.now()}_true`, text: 'صحيح', isCorrect: false },
+        { id: `opt_${Date.now()}_false`, text: 'خطأ', isCorrect: false }
       ]
     };
     
@@ -113,8 +113,8 @@ const CreateActivity = () => {
   const validateActivity = () => {
     if (!title.trim()) {
       toast({
-        title: "Title required",
-        description: "Please enter a title for this activity.",
+        title: "العنوان مطلوب",
+        description: "يرجى إدخال عنوان لهذا النشاط.",
         variant: "destructive",
       });
       return false;
@@ -122,8 +122,8 @@ const CreateActivity = () => {
 
     if (!goals.trim()) {
       toast({
-        title: "Learning goals required",
-        description: "Please enter the learning goals for this activity.",
+        title: "أهداف التعلم مطلوبة",
+        description: "يرجى إدخال أهداف التعلم لهذا النشاط.",
         variant: "destructive",
       });
       return false;
@@ -131,8 +131,8 @@ const CreateActivity = () => {
 
     if (questions.length === 0) {
       toast({
-        title: "Questions required",
-        description: "Please add at least one question to the activity.",
+        title: "الأسئلة مطلوبة",
+        description: "يرجى إضافة سؤال واحد على الأقل للنشاط.",
         variant: "destructive",
       });
       return false;
@@ -141,8 +141,8 @@ const CreateActivity = () => {
     for (const question of questions) {
       if (!question.text.trim()) {
         toast({
-          title: "Question text required",
-          description: "Please enter text for all questions.",
+          title: "نص السؤال مطلوب",
+          description: "يرجى إدخال نص لجميع الأسئلة.",
           variant: "destructive",
         });
         return false;
@@ -151,8 +151,8 @@ const CreateActivity = () => {
       const hasCorrectOption = question.options.some(opt => opt.isCorrect);
       if (!hasCorrectOption) {
         toast({
-          title: "Correct answer required",
-          description: "Please mark a correct answer for each question.",
+          title: "الإجابة الصحيحة مطلوبة",
+          description: "يرجى تحديد إجابة صحيحة لكل سؤال.",
           variant: "destructive",
         });
         return false;
@@ -161,8 +161,8 @@ const CreateActivity = () => {
       for (const option of question.options) {
         if (question.type === 'multiple_choice' && !option.text.trim()) {
           toast({
-            title: "Option text required",
-            description: "Please enter text for all options in multiple choice questions.",
+            title: "نص الخيار مطلوب",
+            description: "يرجى إدخال نص لجميع الخيارات في أسئلة الاختيار من متعدد.",
             variant: "destructive",
           });
           return false;
@@ -183,22 +183,22 @@ const CreateActivity = () => {
       
       if (activityId) {
         toast({
-          title: "Activity created",
-          description: "Your educational activity has been created successfully.",
+          title: "تم إنشاء النشاط",
+          description: "تم إنشاء النشاط التعليمي بنجاح.",
         });
         navigate('/teacher/dashboard');
       } else {
         toast({
-          title: "Failed to create activity",
-          description: "There was an error creating the activity. Please try again.",
+          title: "فشل في إنشاء النشاط",
+          description: "حدث خطأ أثناء إنشاء النشاط. يرجى المحاولة مرة أخرى.",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Create activity error:", error);
       toast({
-        title: "An error occurred",
-        description: "Could not create activity. Please try again later.",
+        title: "حدث خطأ",
+        description: "تعذر إنشاء النشاط. يرجى المحاولة مرة أخرى لاحقًا.",
         variant: "destructive",
       });
     } finally {
@@ -220,7 +220,7 @@ const CreateActivity = () => {
             onClick={handleBack}
           >
             <ArrowLeft className="mr-2 h-5 w-5" />
-            Back to Dashboard
+            العودة للوحة التحكم
           </Button>
           
           <Logo />
@@ -229,34 +229,34 @@ const CreateActivity = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Create New Educational Activity</h1>
+          <h1 className="text-2xl font-bold mb-6">إنشاء نشاط تعليمي جديد</h1>
           
           <Card className="mb-8 border-waai-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center text-waai-primary">
-                <BookOpen className="mr-2 h-5 w-5" />
-                Activity Details
+                <BookOpen className="ml-2 h-5 w-5" />
+                تفاصيل النشاط
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Activity Title</Label>
+                <Label htmlFor="title">عنوان النشاط</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Learning Computer Parts"
+                  placeholder="مثل: تعلم أجزاء الحاسوب"
                   className="text-lg"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="goals">Learning Goals</Label>
+                <Label htmlFor="goals">أهداف التعلم</Label>
                 <Textarea
                   id="goals"
                   value={goals}
                   onChange={(e) => setGoals(e.target.value)}
-                  placeholder="Describe what children will learn from this activity..."
+                  placeholder="صف ما سيتعلمه الأطفال من هذا النشاط..."
                   className="min-h-[100px]"
                 />
               </div>
@@ -264,7 +264,7 @@ const CreateActivity = () => {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <FileImage className="h-4 w-4" />
-                  Cover Image/Video (Optional)
+                  صورة/فيديو الغلاف (اختياري)
                 </Label>
                 <MediaUploader 
                   onFileUploaded={setCoverMedia}
@@ -276,23 +276,23 @@ const CreateActivity = () => {
           </Card>
           
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Questions</h2>
+            <h2 className="text-xl font-semibold">الأسئلة</h2>
             <div className="flex gap-3">
               <Button
                 onClick={handleAddQuestion}
                 variant="outline"
                 className="text-waai-primary border-waai-primary"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Multiple Choice
+                <Plus className="ml-2 h-4 w-4" />
+                إضافة اختيار متعدد
               </Button>
               <Button
                 onClick={handleAddTrueFalseQuestion}
                 variant="outline"
                 className="text-waai-secondary border-waai-secondary"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Add True/False
+                <Plus className="ml-2 h-4 w-4" />
+                إضافة صح/خطأ
               </Button>
             </div>
           </div>
@@ -300,9 +300,9 @@ const CreateActivity = () => {
           {questions.length === 0 ? (
             <Card className="text-center py-12 bg-gray-50 border-dashed">
               <HelpCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Questions Added Yet</h3>
+              <h3 className="text-lg font-medium mb-2">لم تتم إضافة أسئلة بعد</h3>
               <p className="text-gray-500 mb-4 max-w-md mx-auto">
-                Add at least one question to your activity using the buttons above.
+                أضف سؤالاً واحداً على الأقل إلى نشاطك باستخدام الأزرار أعلاه.
               </p>
             </Card>
           ) : (
@@ -328,15 +328,15 @@ const CreateActivity = () => {
               onClick={handleBack}
               disabled={isSubmitting}
             >
-              Cancel
+              إلغاء
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || questions.length === 0}
               className="bg-waai-primary hover:bg-waai-accent1"
             >
-              <Save className="mr-2 h-5 w-5" />
-              {isSubmitting ? "Saving..." : "Save Activity"}
+              <Save className="ml-2 h-5 w-5" />
+              {isSubmitting ? "جاري الحفظ..." : "حفظ النشاط"}
             </Button>
           </div>
         </div>
