@@ -35,8 +35,8 @@ const TeacherPin = () => {
     if (currentTeacher.hasPin === false) {
       // If we're setting up a PIN, let's show a welcome message
       toast({
-        title: "Welcome!",
-        description: "Please set up a 4-digit PIN for quick access to your account.",
+        title: "مرحباً!",
+        description: "يرجى إعداد رقم تعريف شخصي (PIN) مكون من 4 أرقام للوصول السريع إلى حسابك.",
       });
     }
   }, [currentTeacher, navigate, toast]);
@@ -69,8 +69,8 @@ const TeacherPin = () => {
         if (!isConfirming) {
           if (pin.length !== PIN_LENGTH) {
             toast({
-              title: "Invalid PIN",
-              description: `Please enter a ${PIN_LENGTH}-digit PIN.`,
+              title: "رقم تعريف غير صالح",
+              description: `يرجى إدخال رقم تعريف شخصي مكون من ${PIN_LENGTH} أرقام.`,
               variant: "destructive",
             });
             return;
@@ -84,8 +84,8 @@ const TeacherPin = () => {
         // Step 2: Confirm the PIN
         if (pin !== confirmPin) {
           toast({
-            title: "PINs don't match",
-            description: "The PINs you entered don't match. Please try again.",
+            title: "الأرقام غير متطابقة",
+            description: "أرقام التعريف الشخصي التي أدخلتها غير متطابقة. يرجى المحاولة مرة أخرى.",
             variant: "destructive",
           });
           // Reset to start of PIN setup
@@ -98,14 +98,14 @@ const TeacherPin = () => {
         const success = await setupPin(pin);
         if (success) {
           toast({
-            title: "PIN setup complete!",
-            description: "Your PIN has been successfully set up.",
+            title: "تم إعداد رقم التعريف الشخصي!",
+            description: "تم إعداد رقم التعريف الشخصي الخاص بك بنجاح.",
           });
           navigate('/teacher/dashboard');
         } else {
           toast({
-            title: "PIN setup failed",
-            description: "There was an error setting up your PIN. Please try again.",
+            title: "فشل إعداد رقم التعريف الشخصي",
+            description: "حدث خطأ أثناء إعداد رقم التعريف الشخصي الخاص بك. يرجى المحاولة مرة أخرى.",
             variant: "destructive",
           });
         }
@@ -114,8 +114,8 @@ const TeacherPin = () => {
       else {
         if (pin.length !== PIN_LENGTH) {
           toast({
-            title: "Invalid PIN",
-            description: `Please enter your ${PIN_LENGTH}-digit PIN.`,
+            title: "رقم تعريف غير صالح",
+            description: `يرجى إدخال رقم تعريف شخصي المكون من ${PIN_LENGTH} أرقام.`,
             variant: "destructive",
           });
           return;
@@ -124,14 +124,14 @@ const TeacherPin = () => {
         const success = await verifyPin(pin);
         if (success) {
           toast({
-            title: "PIN verified",
-            description: "Welcome back!",
+            title: "تم التحقق من الرقم التعريفي",
+            description: "مرحبًا بك مرة أخرى!",
           });
           navigate('/teacher/dashboard');
         } else {
           toast({
-            title: "Incorrect PIN",
-            description: "The PIN you entered is incorrect. Please try again.",
+            title: "رقم تعريف شخصي غير صحيح",
+            description: "رقم التعريف الشخصي الذي أدخلته غير صحيح. يرجى المحاولة مرة أخرى.",
             variant: "destructive",
           });
           setPin("");
@@ -140,8 +140,8 @@ const TeacherPin = () => {
     } catch (error) {
       console.error("PIN error:", error);
       toast({
-        title: "An error occurred",
-        description: "Could not process your PIN. Please try again later.",
+        title: "حدث خطأ",
+        description: "تعذرت معالجة رقم التعريف الشخصي الخاص بك. يرجى المحاولة مرة أخرى لاحقًا.",
         variant: "destructive",
       });
     }
@@ -161,18 +161,18 @@ const TeacherPin = () => {
             <h1 className="text-2xl font-bold mb-2">
               {isSettingUp 
                 ? isConfirming 
-                  ? "Confirm Your PIN" 
-                  : "Set Up Your PIN"
-                : "Enter Your PIN"
+                  ? "تأكيد رقم التعريف الشخصي" 
+                  : "إعداد رقم التعريف الشخصي"
+                : "أدخل رقم التعريف الشخصي"
               }
             </h1>
             
             <p className="text-gray-600 mb-6">
               {isSettingUp 
                 ? isConfirming 
-                  ? "Please confirm your PIN for verification."
-                  : "Create a secure 4-digit PIN for additional security."
-                : "Use your 4-digit PIN to access your account."
+                  ? "يرجى تأكيد رقم التعريف الشخصي للتحقق."
+                  : "إنشاء رقم تعريف شخصي آمن مكون من 4 أرقام لأمان إضافي."
+                : "استخدم رقم التعريف الشخصي المكون من 4 أرقام للوصول إلى حسابك."
               }
             </p>
             
@@ -198,7 +198,7 @@ const TeacherPin = () => {
                 }}
                 disabled={isLoading}
               >
-                Back to PIN Entry
+                العودة إلى إدخال الرقم التعريفي
               </Button>
             )}
           </CardContent>
