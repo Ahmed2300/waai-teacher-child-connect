@@ -42,8 +42,8 @@ const ChildSelection = () => {
             className="text-waai-primary hover:text-waai-accent1"
             onClick={handleBackToTeacherDashboard}
           >
-            <ArrowLeft className="mr-2 h-5 w-5" />
-            Back to Dashboard
+            <ArrowLeft className="ml-2 h-5 w-5 rotate-180" />
+            العودة إلى لوحة التحكم
           </Button>
           
           <Logo />
@@ -51,27 +51,27 @@ const ChildSelection = () => {
 
         <div className="mt-12 max-w-4xl mx-auto text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-waai-primary to-waai-secondary bg-clip-text text-transparent">
-            Who's Ready to Learn Today?
+            من جاهز للتعلم اليوم؟
           </h1>
           <p className="text-xl text-gray-600 mb-12">
-            Tap on your picture to begin!
+            انقر على صورتك للبدء!
           </p>
 
           {isLoading ? (
             <div className="text-center py-8">
-              <p>Loading children profiles...</p>
+              <p>جاري تحميل ملفات الأطفال...</p>
             </div>
           ) : children.length === 0 ? (
             <div className="bg-white rounded-xl shadow-md p-8 text-center">
-              <h3 className="text-xl font-medium mb-4">No Children Profiles Found</h3>
+              <h3 className="text-xl font-medium mb-4">لم يتم العثور على ملفات شخصية للأطفال</h3>
               <p className="text-gray-600 mb-6">
-                No children have been added yet. Please add children from the teacher dashboard.
+                لم تتم إضافة أي أطفال حتى الآن. يرجى إضافة الأطفال من لوحة تحكم المعلم.
               </p>
               <Button 
                 className="bg-waai-primary hover:bg-waai-accent1"
                 onClick={handleBackToTeacherDashboard}
               >
-                Go to Dashboard
+                الذهاب إلى لوحة التحكم
               </Button>
             </div>
           ) : (

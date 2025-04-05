@@ -15,12 +15,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Form validation schema
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  name: z.string().min(2, { message: "يجب أن يتكون الاسم من حرفين على الأقل" }),
+  email: z.string().email({ message: "يرجى إدخال عنوان بريد إلكتروني صالح" }),
+  password: z.string().min(6, { message: "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل" }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "كلمات المرور غير متطابقة",
   path: ["confirmPassword"],
 });
 
@@ -49,22 +49,22 @@ const TeacherRegister = () => {
       
       if (success) {
         toast({
-          title: "Registration successful!",
-          description: "Let's set up your PIN for secure access.",
+          title: "تم التسجيل بنجاح!",
+          description: "لنقم بإعداد رقم التعريف الشخصي للوصول الآمن.",
         });
         navigate("/teacher/pin");
       } else {
         toast({
-          title: "Registration failed",
-          description: "There was an error during registration. Please try again.",
+          title: "فشل التسجيل",
+          description: "حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Registration error:", error);
       toast({
-        title: "An error occurred",
-        description: "Could not complete registration. Please try again later.",
+        title: "حدث خطأ",
+        description: "لا يمكن إكمال التسجيل. يرجى المحاولة مرة أخرى لاحقًا.",
         variant: "destructive",
       });
     }
@@ -82,17 +82,17 @@ const TeacherRegister = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Link 
         to="/" 
-        className="absolute top-4 left-4 flex items-center text-waai-primary hover:text-waai-accent1 font-medium"
+        className="absolute top-4 right-4 flex items-center text-waai-primary hover:text-waai-accent1 font-medium"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
-        Back to Home
+        العودة إلى الرئيسية
+        <ArrowLeft className="mr-1 h-4 w-4 rotate-180" />
       </Link>
       
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Logo size="large" />
-          <h1 className="mt-4 text-2xl font-bold">Teacher Registration</h1>
-          <p className="text-gray-600">Create your account to get started</p>
+          <h1 className="mt-4 text-2xl font-bold">تسجيل المعلم</h1>
+          <p className="text-gray-600">أنشئ حسابك للبدء</p>
         </div>
         
         <Card>
@@ -104,9 +104,9 @@ const TeacherRegister = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>الاسم الكامل</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your name" {...field} />
+                        <Input placeholder="أدخل اسمك" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -118,9 +118,9 @@ const TeacherRegister = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>البريد الإلكتروني</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter your email" {...field} />
+                        <Input type="email" placeholder="أدخل بريدك الإلكتروني" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -132,12 +132,12 @@ const TeacherRegister = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>كلمة المرور</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input 
                             type={showPassword ? "text" : "password"} 
-                            placeholder="Create a password" 
+                            placeholder="أنشئ كلمة مرور" 
                             {...field} 
                           />
                           <Button
@@ -145,7 +145,7 @@ const TeacherRegister = () => {
                             variant="ghost"
                             size="sm"
                             onClick={togglePasswordVisibility}
-                            className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400"
+                            className="absolute left-0 top-0 h-full px-3 py-2 text-gray-400"
                           >
                             {showPassword ? 
                               <EyeOff className="h-4 w-4" /> : 
@@ -164,12 +164,12 @@ const TeacherRegister = () => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>تأكيد كلمة المرور</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input 
                             type={showConfirmPassword ? "text" : "password"} 
-                            placeholder="Confirm your password" 
+                            placeholder="أكد كلمة المرور الخاصة بك" 
                             {...field} 
                           />
                           <Button
@@ -177,7 +177,7 @@ const TeacherRegister = () => {
                             variant="ghost"
                             size="sm"
                             onClick={toggleConfirmPasswordVisibility}
-                            className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400"
+                            className="absolute left-0 top-0 h-full px-3 py-2 text-gray-400"
                           >
                             {showConfirmPassword ? 
                               <EyeOff className="h-4 w-4" /> : 
@@ -196,16 +196,16 @@ const TeacherRegister = () => {
                   className="w-full bg-waai-primary hover:bg-waai-accent1"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Creating Account..." : "Create Account"}
+                  {isLoading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="flex justify-center border-t p-4">
             <p className="text-sm text-gray-600">
-              Already have an account?{" "}
+              لديك حساب بالفعل؟{" "}
               <Link to="/teacher/login" className="text-waai-primary hover:text-waai-accent1 font-semibold">
-                Sign in
+                تسجيل الدخول
               </Link>
             </p>
           </CardFooter>

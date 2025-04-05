@@ -16,8 +16,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Form validation schema
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  email: z.string().email({ message: "يرجى إدخال عنوان بريد إلكتروني صالح" }),
+  password: z.string().min(1, { message: "كلمة المرور مطلوبة" }),
   rememberMe: z.boolean().default(false),
 });
 
@@ -47,8 +47,8 @@ const TeacherLogin = () => {
         
         if (success) {
           toast({
-            title: "Welcome back!",
-            description: "You've been automatically logged in.",
+            title: "مرحبًا بعودتك!",
+            description: "لقد تم تسجيل دخولك تلقائيًا.",
           });
           navigate("/teacher/pin");
         }
@@ -66,22 +66,22 @@ const TeacherLogin = () => {
       
       if (success) {
         toast({
-          title: "Login successful!",
-          description: "Please enter your PIN to continue.",
+          title: "تم تسجيل الدخول بنجاح!",
+          description: "يرجى إدخال رقم التعريف الشخصي للمتابعة.",
         });
         navigate("/teacher/pin");
       } else {
         toast({
-          title: "Login failed",
-          description: "Invalid email or password. Please try again.",
+          title: "فشل تسجيل الدخول",
+          description: "بريد إلكتروني أو كلمة مرور غير صالحة. يرجى المحاولة مرة أخرى.",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "An error occurred",
-        description: "Could not complete login. Please try again later.",
+        title: "حدث خطأ",
+        description: "لا يمكن إكمال تسجيل الدخول. يرجى المحاولة مرة أخرى لاحقًا.",
         variant: "destructive",
       });
     }
@@ -97,7 +97,7 @@ const TeacherLogin = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <Logo size="large" />
-          <p className="mt-4 text-gray-600">Checking login status...</p>
+          <p className="mt-4 text-gray-600">جاري التحقق من حالة تسجيل الدخول...</p>
         </div>
       </div>
     );
@@ -107,17 +107,17 @@ const TeacherLogin = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Link 
         to="/" 
-        className="absolute top-4 left-4 flex items-center text-waai-primary hover:text-waai-accent1 font-medium"
+        className="absolute top-4 right-4 flex items-center text-waai-primary hover:text-waai-accent1 font-medium"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
-        Back to Home
+        العودة إلى الرئيسية
+        <ArrowLeft className="mr-1 h-4 w-4 rotate-180" />
       </Link>
       
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Logo size="large" />
-          <h1 className="mt-4 text-2xl font-bold">Teacher Login</h1>
-          <p className="text-gray-600">Welcome back! Please login to your account</p>
+          <h1 className="mt-4 text-2xl font-bold">تسجيل دخول المعلم</h1>
+          <p className="text-gray-600">مرحبًا بعودتك! يرجى تسجيل الدخول إلى حسابك</p>
         </div>
         
         <Card>
@@ -129,9 +129,9 @@ const TeacherLogin = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>البريد الإلكتروني</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="Enter your email" {...field} />
+                        <Input type="email" placeholder="أدخل بريدك الإلكتروني" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -143,12 +143,12 @@ const TeacherLogin = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>كلمة المرور</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input 
                             type={showPassword ? "text" : "password"} 
-                            placeholder="Enter your password" 
+                            placeholder="أدخل كلمة المرور" 
                             {...field} 
                           />
                           <Button
@@ -156,7 +156,7 @@ const TeacherLogin = () => {
                             variant="ghost"
                             size="sm"
                             onClick={togglePasswordVisibility}
-                            className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400"
+                            className="absolute left-0 top-0 h-full px-3 py-2 text-gray-400"
                           >
                             {showPassword ? 
                               <EyeOff className="h-4 w-4" /> : 
@@ -183,12 +183,12 @@ const TeacherLogin = () => {
                             id="rememberMe" 
                           />
                         </FormControl>
-                        <div className="space-y-1 leading-none">
+                        <div className="space-y-1 leading-none mr-2">
                           <FormLabel 
                             htmlFor="rememberMe" 
                             className="text-sm font-normal cursor-pointer"
                           >
-                            Remember me
+                            تذكرني
                           </FormLabel>
                         </div>
                       </FormItem>
@@ -196,7 +196,7 @@ const TeacherLogin = () => {
                   />
                   
                   <Link to="/forgot-password" className="text-sm text-waai-primary hover:text-waai-accent1">
-                    Forgot password?
+                    نسيت كلمة المرور؟
                   </Link>
                 </div>
                 
@@ -205,16 +205,16 @@ const TeacherLogin = () => {
                   className="w-full bg-waai-primary hover:bg-waai-accent1"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing In..." : "Sign In"}
+                  {isLoading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
                 </Button>
               </form>
             </Form>
           </CardContent>
           <CardFooter className="flex justify-center border-t p-4">
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              ليس لديك حساب؟{" "}
               <Link to="/teacher/register" className="text-waai-primary hover:text-waai-accent1 font-semibold">
-                Register
+                تسجيل
               </Link>
             </p>
           </CardFooter>
